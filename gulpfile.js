@@ -1,72 +1,103 @@
-var gulp = require('gulp'),
-$ = require('gulp-load-plugins')({pattern: ['gulp-*']}),
-$css = require('gulp-load-plugins')({
-    pattern: ['postcss-*', 'autoprefixer', 'css-mqpacker', 'cssnano', 'csscomb'],
-    replaceString: /^postcss(-|\.)/
-  }),
-paths = {src: 'src/', dist: 'dist/', dev: 'dev/', entry: 'sierra.scss'};
 
-var autoprefixer = {
-  browsers: ['last 3 versions'],
-  cascade: false
-}
+var gulp = require('gulp');
+var sass = require('gulp-sass');
+var autoprefixer = require('gulp-autoprefixer');
+var concat = require('gulp-concat');
+var browserSync = require('browser-sync');
+var useref = require('gulp-useref');
+var uglify = require('gulp-uglify');
+var gulpIf = require('gulp-if');
+var cssnano = require('gulp-cssnano');
+var imagemin = require('gulp-imagemin');
+var cache = require('gulp-cache');
+var del = require('del');
+var runSequence = require('run-sequence');
 
-/**
- *  Error handling
- */
 
-var onError = function (err) {
-  $.notify.onError({
-    title: "Gulp",
-    subtitle: "Failure!",
-    message: "Error: <%= error.message %>",
-    sound: "Beep"
-  })(err);
-  this.emit('end');
-};
+// Start browserSync server
+gulp.task('browserSync', function() {
+  browserSync({
+    server: {
+      baseDir: 'app'
+    }
+  })
+})
 
-/**
- *  Default tasks
- */
+gulp.task('sass', function() {
+  return gulp.src('app/scss/style.scss') // Gets all files ending with .scss in app/scss and children dirs
+    .pipe(sass().on('error', sass.logError)) // Passes it through a gulp-sass, log errors to console
+    .pipe(concat('style.css')) // This will concat files by your operating systems newLine. It will take the base directory from the first file that passes through it.
+    .pipe(autoprefixer(
+      {browsers: ['last 4 version', 'safari 5', 'ie 6', 'ie 7', 'ie 8', 'ie 9', 'opera 12.1', 'ios 6', 'android 4']}
+    ))
+    .pipe(gulp.dest('app/css')) // Outputs it in the css folder
+    .pipe(browserSync.reload({ // Reloading with Browser Sync
+      stream: true
+    }));
+})
 
-gulp.task('default', function() {
-  return gulp.src(paths.src+paths.entry)
-  .pipe($.plumber({errorHandler: onError}))
-  .pipe($.sourcemaps.init())
-  .pipe($.sass({compress: false, outputStyle: 'expanded'}).on('error', $.util.log))
-  .pipe($.postcss([
-    $css.cssnano({
-      discardComments: {removeAll: true},
-      autoprefixer: autoprefixer
-    })
-  ]))
-  .pipe($.rename({
-    basename: 'sierra'
-  }))
-  .pipe($.sourcemaps.write())
-  .pipe(gulp.dest(paths.dev))
-  .pipe($.size({title: 'Development', showFiles: true}));
+// Watchers
+gulp.task('watch', function() {
+  gulp.watch('app/scss/**/*.scss', ['sass']);
+  gulp.watch('app/*.html', browserSync.reload);
+  gulp.watch('app/js/**/*.js', browserSync.reload);
+})
+
+// Optimization Tasks
+// ------------------
+
+// Optimizing CSS and JavaScript
+gulp.task('useref', function() {
+
+  return gulp.src('app/*.html')
+    .pipe(useref())
+    .pipe(gulpIf('*.js', uglify()))
+    .pipe(gulpIf('*.css', cssnano()))
+    .pipe(gulp.dest('dist'));
 });
 
-/**
- *  Build production ready sass
- */
-gulp.task('build', function() {
-  return gulp.src(paths.src+paths.entry)
-  .pipe($.plumber({errorHandler: onError}))
-  .pipe($.sass({compress: true, outputStyle: 'compressed'}).on('error', $.util.log))
-  .pipe($.postcss([
-    $css.cssMqpacker,
-    $css.csscomb,
-    $css.cssnano({
-      discardComments: {removeAll: true},
-      autoprefixer: autoprefixer
-    })
-  ]))
-  .pipe($.rename({
-    basename: 'sierra',
-    suffix: '.min'
-  }))
-  .pipe(gulp.dest(paths.dist))
-  .pipe($.size({title: 'Production', showFiles: true}));
+// Optimizing Images
+gulp.task('images', function() {
+  return gulp.src('app/images/**/*.+(png|jpg|jpeg|gif|svg)')
+    // Caching images that ran through imagemin
+    .pipe(cache(imagemin({
+      interlaced: true,
+    })))
+    .pipe(gulp.dest('dist/images'))
 });
+
+// Copying fonts
+gulp.task('fonts', function() {
+  return gulp.src('app/fonts/**/*')
+    .pipe(gulp.dest('dist/fonts'))
+})
+
+// Cleaning
+gulp.task('clean', function() {
+  return del.sync('dist').then(function(cb) {
+    return cache.clearAll(cb);
+  });
+
+})
+
+gulp.task('clean:dist', function() {
+  return del.sync(['dist/**/*', '!dist/images', '!dist/images/**/*']);
+});
+
+// Build Sequences
+// ---------------
+
+gulp.task('default', function(callback) {
+  runSequence(['sass', 'browserSync'], 'watch',
+    callback
+  )
+})
+
+gulp.task('build', function(callback) {
+  runSequence(
+    'clean:dist',
+    'sass',
+    ['useref', 'images', 'fonts'],
+    callback
+  )
+})
