@@ -24,7 +24,7 @@ gulp.task('browserSync', function() {
 })
 
 gulp.task('sass', function() {
-  return gulp.src('app/scss/style.scss') // Gets all files ending with .scss in app/scss and children dirs
+  return gulp.src('app/scss/index.scss') // Gets all files ending with .scss in app/scss and children dirs
     .pipe(sass().on('error', sass.logError)) // Passes it through a gulp-sass, log errors to console
     .pipe(concat('style.css')) // This will concat files by your operating systems newLine. It will take the base directory from the first file that passes through it.
     .pipe(autoprefixer(

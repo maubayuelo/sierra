@@ -13,29 +13,30 @@ These instructions will get you a copy of the project up and running on your loc
 
 ## Installing
 
-On your terminal machine remember to do run the `sudo npm install` command after cloning this repo to your local.
+On your terminal machine remember to do run the `npm install` command after cloning this repo to your local.
 This will install Gulp and his dependencies.
 
 ### Running the tests
 
 Gulp provides us with a `watch` method that checks to see if a file was saved.
-- Do `sudo gulp watch` to allow compile CSS and JS files
+- Do `gulp watch` to allow compile CSS and JS files
 
 Browser Sync helps make web development easier by spinning up a web server that helps us do live-reloading easily.
-- Do `sudo gulp browserSync` to allow compile CSS and JS files
-- Or do `sudo gulp` to allow compile CSS and JS files
+- Do `gulp browserSync` to allow compile CSS and JS files
 - you will see the `index.html` file be loading on `http://localhost:3000/`
 
 ### Dist folder
 It will uglify CSS and JS files in one. It will copy fonts and compress images.
-- Do `sudo gulp build` to allow compile CSS and JS files
+- Do `gulp build` to allow compile CSS and JS files
 
 
 ### Cleaning up generated DIST files automatically
 Since we're generating files automatically, we'll want to make sure that files that are no longer used don't remain anywhere without us knowing. Clean task that clears away from the generated dist folder any image caches that are created, allowing us to remove any old files that were inadvertently kept in dist.
-- Do `sudo gulp clean`
+- Do `gulp clean`
 
-## Built With
+## Front end considerations
+* To build up the website scss library [Sierra](https://sierra-library.github.io/) framework is used.
+* Check the gitHub where you will see the documentation how to implement the UI and grid (Twitter bootstrap's grid v4.1.0).
 
 * [Dropwizard](http://www
   - dropwizard.io/1.0.2/docs/) - The web framework used
